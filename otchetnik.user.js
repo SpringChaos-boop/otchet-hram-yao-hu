@@ -6,6 +6,8 @@
 // @author       Горицвет [1705753]
 // @match        http*://*.catwar.net/*
 // @match        http*://*.catwar.su/*
+// @updateURL    https://github.com/SpringChaos-boop/otchet-hram-yao-hu/raw/refs/heads/main/otchetnik.user.js
+// @downloadURL  https://github.com/SpringChaos-boop/otchet-hram-yao-hu/raw/refs/heads/main/otchetnik.user.js
 // @icon         https://tinyurl.com/2wy88yub
 // @grant        none
 // @license      MIT
