@@ -49,7 +49,7 @@
   // ════════════════════════════════════════════
   //  ВСТРОЕННЫЕ ШАБЛОНЫ
   // ════════════════════════════════════════════
-  const BUILTIN_VERSION = 76;
+  const BUILTIN_VERSION = 77;
   const BUILTIN_GROUPS = [
     {
       mask: "blog995220",
@@ -226,7 +226,8 @@
             { type: "text", value: "][/b]" },
             { type: "newline" },
             { type: "text", value: "[b]Место дозора:[/b] " },
-            { type: "user_text", label: "Локация или маршрут", placeholder: "..." }
+            { type: "select", key: "dz_loc", label: "Локация", exclusiveGroup: "dz_place", options: ["Развилка", "Замшелый мост", "Апельсиновая роща", "Нагорье", "Песчаный Берег", "Покрытый паутиной грот", "Зелёная чаща"], default: "" },
+            { type: "select", key: "dz_route", label: "Маршрут", exclusiveGroup: "dz_place", options: ["1 маршрут", "2 маршрут", "3 маршрут", "4 маршрут"], default: "" }
           ]
         },
         {
@@ -235,9 +236,8 @@
             { type: "text", value: "Я, [b]" },
             { type: "userid", style: "link" },
             { type: "text", value: "[/b], начинаю дозор на " },
-            { type: "select", label: "Локация", options: ["Развилка", "Замшелый мост", "Апельсиновая роща", "Нагорье", "Песчаный Берег", "Покрытый паутиной грот", "Зелёная чаща"], default: "Развилка" },
-            { type: "text", value: " / " },
-            { type: "select", label: "Маршрут", options: ["1 маршрут", "2 маршрут", "3 маршрут", "4 маршрут"], default: "1 маршрут" }
+            { type: "select", key: "nd_loc", label: "Локация", exclusiveGroup: "nd_place", options: ["Развилка", "Замшелый мост", "Апельсиновая роща", "Нагорье", "Песчаный Берег", "Покрытый паутиной грот", "Зелёная чаща"], default: "" },
+            { type: "select", key: "nd_route", label: "Маршрут", exclusiveGroup: "nd_place", options: ["1 маршрут", "2 маршрут", "3 маршрут", "4 маршрут"], default: "" }
           ]
         },
         {
@@ -265,9 +265,9 @@
         {
           name: "Охота",
           blocks: [
-            { type: "select", key: "hunt_type", label: "Тип охоты", options: ["Охота", "Одиночная охота"], default: "Охота", silent: true },
+            { type: "select", key: "hunt_type", label: "Тип охоты", options: ["Охота", "Самостоятельная охота"], default: "Охота", silent: true },
             { type: "text", value: "[u]" },
-            { type: "text_switch", watchKey: "hunt_type", watchValue: "Одиночная охота", value: "Одиночная охота", altValue: "Охота" },
+            { type: "text_switch", watchKey: "hunt_type", watchValue: "Самостоятельная охота", value: "Самостоятельная охота", altValue: "Охота" },
             { type: "text", value: ", дата — " },
             { type: "date_ddmm" },
             { type: "text", value: "[/u]" },
@@ -1764,16 +1764,25 @@
           ? 'width:100%;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;box-sizing:border-box;'
           : 'width:100%;padding:2px 4px;border:1px solid #888;font-size:12px;';
         const opts2 = block.options || [];
+        const excl = !!block.exclusiveGroup;
         if (!nested) {
+          if (excl) {
+            const d0 = document.createElement('option'); d0.value = ''; d0.textContent = '-- не выбрано --'; sel.appendChild(d0);
+          }
           opts2.forEach(o => { const el = document.createElement('option'); el.value = o; el.textContent = o; sel.appendChild(el); });
-          const def = block.default !== undefined && block.default !== '' ? block.default : (opts2[0] || '');
+          const def = excl ? '' : (block.default !== undefined && block.default !== '' ? block.default : (opts2[0] || ''));
           sel.value = def;
           formData[fieldId] = def;
         } else {
-          const d = document.createElement('option'); d.value = ''; d.textContent = '-- выбрать --'; sel.appendChild(d);
+          const d = document.createElement('option'); d.value = ''; d.textContent = excl ? '-- не выбрано --' : '-- выбрать --'; sel.appendChild(d);
           opts2.forEach(o => { const el = document.createElement('option'); el.value = o; el.textContent = o; sel.appendChild(el); });
-          sel.value = block.default !== undefined ? block.default : '';
+          sel.value = excl ? '' : (block.default !== undefined ? block.default : '');
           formData[fieldId] = sel.value;
+        }
+        if (excl) {
+          field.classList.add('cw-excl-field');
+          field.dataset.exclGroup = block.exclusiveGroup;
+          field.dataset.exclFid = fieldId;
         }
         sel.onchange = () => { formData[fieldId] = sel.value; upd(); };
         addLabelAnd(sel);
@@ -2520,6 +2529,36 @@
         const el = renderBlockField(b, 'cw_f_' + i, formData, { nested: false });
         if (el) body.appendChild(el);
       } catch(e) { warn('render block error', b, e); }
+    });
+
+    // Взаимоисключающие выпадающие списки (Локация / Маршрут):
+    // выбор одного скрывает и очищает остальные из той же группы.
+    const exclGroups = {};
+    body.querySelectorAll('.cw-excl-field').forEach(f => {
+      const g = f.dataset.exclGroup;
+      (exclGroups[g] = exclGroups[g] || []).push(f);
+    });
+    Object.keys(exclGroups).forEach(g => {
+      const members = exclGroups[g];
+      members.forEach(f => {
+        const sel = f.querySelector('select');
+        if (!sel) return;
+        sel.addEventListener('change', () => {
+          const chosen = sel.value !== '';
+          members.forEach(other => {
+            if (other === f) return;
+            const osel = other.querySelector('select');
+            if (chosen) {
+              if (osel) osel.value = '';
+              formData[other.dataset.exclFid] = '';
+              other.style.display = 'none';
+            } else {
+              other.style.display = '';
+            }
+          });
+          __previewTick();
+        });
+      });
     });
 
     body.addEventListener('input', () => { dirty = true; });
