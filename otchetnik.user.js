@@ -794,7 +794,7 @@
             { type: "text", value: " " },
             { type: "userid", style: "id" },
             { type: "text", value: "[/b], почистил локацию " },
-            { type: "user_text", label: "Локация", placeholder: "Впиши название...", options: ["Тёплая канавка", "Мшистый туннель", "Заоблачный предел", "Лазурная Гладь", "Апельсиновая Роща", "Рисовые Поля", "Развилка", "Песчаный Берег"], noIcon: true },
+            { type: "user_text", label: "Локация", placeholder: "Впиши название...", options: ["Песчаный берег", "Замшелый мост", "КСД", "Солнечная лужайка", "Зал звёздных витражей"], noIcon: true },
             { type: "text", value: " от мусора." },
             { type: "newline" },
             { type: "text", value: "[" },
