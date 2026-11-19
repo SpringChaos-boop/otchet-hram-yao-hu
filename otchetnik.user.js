@@ -49,7 +49,7 @@
   // ════════════════════════════════════════════
   //  ВСТРОЕННЫЕ ШАБЛОНЫ
   // ════════════════════════════════════════════
-  const BUILTIN_VERSION = 77;
+  const BUILTIN_VERSION = 80;
   const BUILTIN_GROUPS = [
     {
       mask: "blog995220",
@@ -273,37 +273,32 @@
             { type: "text", value: "[/u]" },
             { type: "newline" },
 
-            { type: "text", value: "[b]Вид охоты:[/b] " },
-            { type: "select", label: "Вид охоты", options: ["утренняя", "дневная", "вечерняя", "для Ванцань"], default: "утренняя" },
-            { type: "newline" },
+            // ── Охота (групповая) ──
+            { type: "text", value: "[b]Вид охоты:[/b] ", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "select", label: "Вид охоты", options: ["утренняя", "дневная", "вечерняя", "для Ванцань"], default: "утренняя", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "newline", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "text", value: "[b]Собирающий:[/b] ", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "userid", style: "link", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "text", value: " ", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "userid", style: "id", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "newline", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "text", value: "[b]Охотники:[/b] ", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "other_userid", label: "Охотники (ID + кол-во)", style: "link_id_count_parens", separator: ", ", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "newline", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "text", value: "[b]Таскающие:[/b] ", watchKey: "hunt_type", watchValue: "Охота" },
+            { type: "other_userid", label: "Таскающие (ID)", style: "link_id", separator: ", ", watchKey: "hunt_type", watchValue: "Охота" },
 
-            {
-              type: "checkbox_group", label: "Заполнить как Групповую", key: "is_group",
-              blocks: [
-                { type: "text", value: "[b]Собирающий:[/b] " },
-                { type: "userid", style: "link" },
-                { type: "text", value: " " },
-                { type: "userid", style: "id" },
-                { type: "newline" },
-                { type: "text", value: "[b]Охотники:[/b] " },
-                { type: "other_userid", label: "Охотники (ID + кол-во)", style: "link_id_count_parens", separator: ", " }
-              ]
-            },
-            {
-              type: "checkbox_group", label: "Заполнить как Одиночную", key: "is_solo",
-              blocks: [
-                { type: "text", value: "[b]Локация:[/b] " },
-                { type: "select", label: "Локация", options: ["Лазурная Гладь", "Апельсиновая Роща", "Рисовые Поля"], default: "Лазурная Гладь" },
-                { type: "newline" },
-                { type: "text", value: "[b]Охотник:[/b] " },
-                { type: "userid", style: "link" },
-                { type: "text", value: " " },
-                { type: "userid", style: "id" },
-                { type: "text", value: " (" },
-                { type: "number", label: "Кол-во дичи", placeholder: "0" },
-                { type: "text", value: ")" }
-              ]
-            }
+            // ── Самостоятельная охота (одиночная) ──
+            { type: "text", value: "[b]Локация:[/b] ", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "select", label: "Локация", options: ["Лазурная Гладь", "Апельсиновая Роща", "Рисовые Поля"], default: "Лазурная Гладь", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "newline", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "text", value: "[b]Охотник:[/b] ", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "userid", style: "link", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "text", value: " ", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "userid", style: "id", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "text", value: " (", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "number", label: "Кол-во дичи", placeholder: "0", watchKey: "hunt_type", watchValue: "Самостоятельная охота" },
+            { type: "text", value: ")", watchKey: "hunt_type", watchValue: "Самостоятельная охота" }
           ]
         },
         {
@@ -1528,6 +1523,13 @@
     const addLabelAnd = (node) => { field.appendChild(label); field.appendChild(node); };
     const upd = () => __previewTick();
 
+    if (block.watchKey && block.type !== 'text_switch') {
+      field.dataset.watchKey = block.watchKey;
+      field.dataset.watchValue = block.watchValue !== undefined ? block.watchValue : '';
+      field.dataset.watchHasValue = block.watchValue !== undefined ? '1' : '0';
+      if (block.invert) field.dataset.watchInvert = '1';
+    }
+
     switch (block.type) {
       case 'text': { field.style.display = 'none'; formData[fieldId] = block.value || ''; return null; }
       case 'newline': { field.style.display = 'none'; formData[fieldId] = '\n'; return null; }
@@ -2224,6 +2226,21 @@
   }
 
   // ════════════════════════════════════════════
+  //  УСЛОВНЫЕ БЛОКИ (watchKey / watchValue)
+  // ════════════════════════════════════════════
+  function isCondActive(b, fd, keyMap) {
+    if (!b || !b.watchKey) return true;
+    var wf = keyMap[b.watchKey];
+    var st = wf ? fd[wf] : undefined;
+    if (st === undefined) return true;
+    var on;
+    if (b.watchValue !== undefined) on = (st === b.watchValue);
+    else on = (st === '1');
+    if (b.invert) on = !on;
+    return on;
+  }
+
+  // ════════════════════════════════════════════
   //  ГЕНЕРАЦИЯ ТЕКСТА
   // ════════════════════════════════════════════
   function applyBiu(val, block) {
@@ -2271,10 +2288,22 @@
     }).join(sep);
   }
 
-  function generateNested(nb, fid, fd) {
+  function generateNested(nb, fid, fd, keyMap) {
+    keyMap = keyMap || {};
+    if (nb.type !== 'text_switch' && !isCondActive(nb, fd, keyMap)) return '';
     switch (nb.type) {
       case 'text': return applyBiu(fd[fid] || '', nb);
       case 'hint': return '';
+      case 'userid': return applyBiu(resolveUserid(nb), nb);
+      case 'text_switch': {
+        var watchedFid = nb.watchKey ? keyMap[nb.watchKey] : null;
+        var st = watchedFid ? fd[watchedFid] : '0';
+        var on;
+        if (nb.watchValue !== undefined) { on = (st === nb.watchValue); }
+        else { on = (st === '1'); }
+        if (nb.invert) on = !on;
+        return applyBiu(on ? (nb.value || '') : (nb.altValue || ''), nb);
+      }
       case 'number': { let v = fd[fid] || ''; if (nb.style === 'brackets' && v) v = '[' + v + ']'; return applyBiu(v, nb); }
       case 'other_userid': return applyBiu(generateOther(nb, fd[fid] || []), nb);
       case 'date': return applyBiu(fd[fid] || '', nb);
@@ -2354,6 +2383,7 @@
     (blocks || []).forEach((b, i) => {
       const fid = 'cw_f_' + i;
       try {
+        if (b.type !== 'text_switch' && !isCondActive(b, fd, keyMap)) return;
         switch (b.type) {
           case 'text': out += applyBiu(b.value || '', b); break;
           case 'hint': break;
@@ -2450,7 +2480,7 @@
             if (fd[fid] === '1' && Array.isArray(b.blocks)) {
               b.blocks.forEach((nb, j) => {
                 if (nb.type === 'checkbox_group') return;
-                out += generateNested(nb, fid + '_' + j, fd);
+                out += generateNested(nb, fid + '_' + j, fd, keyMap);
               });
             }
             break;
@@ -2664,6 +2694,33 @@
     }
     __previewTick = updatePreview;
     updatePreview();
+
+    // Поля с watchKey показываются/скрываются в зависимости от выбранного значения.
+    (function setupWatchFields() {
+      const fields = Array.from(body.querySelectorAll('[data-watch-key]'));
+      if (!fields.length) return;
+      const keyMap = {};
+      (tmpl.blocks || []).forEach((b, i) => { if (b && b.key) keyMap[b.key] = 'cw_f_' + i; });
+
+      function apply() {
+        fields.forEach(f => {
+          const fid = keyMap[f.dataset.watchKey];
+          if (!fid) return;
+          const st = formData[fid];
+          let on;
+          if (f.dataset.watchHasValue === '1') on = (st === f.dataset.watchValue);
+          else on = (st === '1');
+          if (f.dataset.watchInvert === '1') on = !on;
+          f.style.display = on ? '' : 'none';
+        });
+        updatePreview();
+      }
+
+      body.addEventListener('input', apply);
+      body.addEventListener('change', apply);
+      apply();
+    })();
+
 
     setTimeout(() => {
       const first = body.querySelector('input,select,textarea');
